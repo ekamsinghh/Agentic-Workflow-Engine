@@ -1,4 +1,5 @@
 from .schema import Node, WorkflowState
+from database.sqlite import save_checkpoint
 
 class Graph:
     def __init__(self):
@@ -26,6 +27,8 @@ class Graph:
             state = node.operation(state)
 
             state.history.append(current_node)
+            state_json = state.model_dump_json()#inbuilt method provided by pydantic to convert data into valid json
+            save_checkpoint(state.run_id,current_node,state_json)
             node_edges = self.edges.get(node.name,{}) # using get method so that if the key is absent then it will not throw an error
             if(state.status in node_edges):
                 current_node = node_edges[state.status]
