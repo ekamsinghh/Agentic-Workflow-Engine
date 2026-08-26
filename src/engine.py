@@ -1,5 +1,5 @@
 from .schema import Node, WorkflowState
-import database.sqlite as db
+import src.database.sqlite as db
 
 class Graph:
     def __init__(self):
