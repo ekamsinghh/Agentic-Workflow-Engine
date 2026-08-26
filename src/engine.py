@@ -19,13 +19,16 @@ class Graph:
 
         self.edges[source_name][condition] = end
 
-    def run(self,state: WorkflowState, start_node: str = None):
+    def run(self,state: WorkflowState, start_node: str = None, max_steps: int = 25):
         current_node = self.entry_point
 
         if(start_node is not None):
             current_node = start_node
-
+        steps = 0
         while(current_node is not None):
+            steps += 1
+            if(steps > max_steps):
+                raise RuntimeError("Max steps exceeded, possible infinite loop detected")
             node = self.nodes[current_node]
             state = node.operation(state)
 
