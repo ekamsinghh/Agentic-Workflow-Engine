@@ -7,10 +7,11 @@ def init_db(db_path: str = "checkpoints.sqlite"):
     cur.execute(
         "CREATE TABLE IF NOT EXISTS checkpoints (run_id TEXT PRIMARY KEY,current_node TEXT,state_data TEXT)"
     )
-    res = cur.execute("SELECT name from sqlite_master")
+    res = cur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='checkpoints'")
     if(res.fetchone() is None):
         print("Error in creating table⚠️")
-
+        
+    connection.commit()
     connection.close()
 
 def save_checkpoint(run_id: str, current_node: str, state_json: str, db_path: str = "checkpoints.sqlite"):
@@ -24,7 +25,7 @@ def save_checkpoint(run_id: str, current_node: str, state_json: str, db_path: st
     connection.commit() # to commit the current transaction
     connection.close()
 
-def load_checkpoint(run_id: str,db_path: str = "checkpoints.sqlite") -> (tuple[str,str] | None): # tuple[str,str] ,eans the function will return tuple of size 2 with 2 string entries
+def load_checkpoint(run_id: str,db_path: str = "checkpoints.sqlite") -> (tuple[str,str] | None): # tuple[str,str] ,means the function will return tuple of size 2 with 2 string entries
     connection = sq.connect(db_path)
     cur = connection.cursor()
 

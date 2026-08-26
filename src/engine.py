@@ -1,5 +1,5 @@
 from .schema import Node, WorkflowState
-from database.sqlite import save_checkpoint
+import database.sqlite as db
 
 class Graph:
     def __init__(self):
@@ -19,8 +19,11 @@ class Graph:
 
         self.edges[source_name][condition] = end
 
-    def run(self,state: WorkflowState):
+    def run(self,state: WorkflowState, start_node: str = None):
         current_node = self.entry_point
+
+        if(start_node is not None):
+            current_node = start_node
 
         while(current_node is not None):
             node = self.nodes[current_node]
@@ -28,7 +31,7 @@ class Graph:
 
             state.history.append(current_node)
             state_json = state.model_dump_json()#inbuilt method provided by pydantic to convert data into valid json
-            save_checkpoint(state.run_id,current_node,state_json)
+            db.save_checkpoint(state.run_id,current_node,state_json)
             node_edges = self.edges.get(node.name,{}) # using get method so that if the key is absent then it will not throw an error
             if(state.status in node_edges):
                 current_node = node_edges[state.status]
@@ -36,3 +39,20 @@ class Graph:
                 current_node = None
 
         return state
+
+    def resume(self, run_id: str):
+        res = db.load_checkpoint(run_id)
+        
+        if(res is None):
+            raise ValueError("No checkpoint found")
+        
+        last_node, raw_state = res
+        state = WorkflowState.model_validate_json(raw_state)
+
+        status = state.status
+        node_edges = self.edges.get(last_node,{})
+        next_node = None
+        if(state.status in node_edges):
+            next_node = node_edges[status]
+        
+        return self.run(state, start_node = next_node)
